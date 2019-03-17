@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+service Protocol {
+    rpc sayHello (HelloRequest) returns (HelloReply) {}
+    rpc resources (ResourcesRequest) returns (ResourcesReply) {}
+    rpc resource (ResourceRequest) returns (ResourceReply) {}
+}
+
+message HelloRequest {
+    string name = 1;
+}
+
+message HelloReply {
+    string message = 1;
+}
+
+message ResourcesRequest {
+    string id = 1;
+}
+
+message ResourcesReply {
+    string message = 1;
+}
+
+message ResourceRequest {
+    string id = 1;
+}
+
+message ResourceReply {
+    string message = 1;
+}
