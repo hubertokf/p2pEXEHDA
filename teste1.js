@@ -3,9 +3,34 @@ const path = require('path')
 const PeerInfo = require('peer-info')
 const protobuf = require('protobufjs')
 const ip = require('ip');
+const uuid = require('uuid')
 
 const Node = require('libp2p-rpc')
-
+const resources = [{
+    id: 1,
+    uuid: uuid.v4(),
+    type: "temperature",
+    name: "res1",
+    extAddr: "http://127.0.0.1/",
+    localAddr: "http://127.0.0.1/",
+    status: true
+}, {
+    id: 2,
+    name: "res2",
+    uuid: uuid.v4(),
+    type: "temperature",
+    extAddr: "http://127.0.0.1/",
+    localAddr: "http://127.0.0.1/",
+    status: true
+}, {
+    id: 3,
+    name: "res3",
+    uuid: uuid.v4(),
+    type: "temperature",
+    extAddr: "http://127.0.0.1/",
+    localAddr: "http://127.0.0.1/",
+    status: true
+}]
 const config = {
     name: 'your-protocol-name',
     version: '1.0.0',
@@ -19,7 +44,7 @@ const config = {
 PeerInfo.create((err, peerInfo) => {
     if (err) throw new Error(err)
     
-    protobuf.load(path.join(__dirname, './protocol.proto')).then((root) => {
+    protobuf.load(path.join(__dirname, './protocol_bkp.proto')).then((root) => {
         const node = new Node(peerInfo, root, config)
         var addr = '/ip4/'+ip.address()+'/tcp/46459/ipfs/'+peerInfo.id._idB58String
         
@@ -30,7 +55,7 @@ PeerInfo.create((err, peerInfo) => {
             console.log('peer:connection')
             console.log(peer._connectedMultiaddr)
     
-            peer.rpc.sayHello({name: 'Foo'}, (response, peer) => {
+            peer.rpc.resources({ id: '1' }, (response, peer) => {
                 console.log('sayHello Response', response)
             })
         })
@@ -39,9 +64,11 @@ PeerInfo.create((err, peerInfo) => {
             console.log('peer:disconnect')
         })
         
-        node.handle('sayHello', (message, peer, response) => {
-            console.log('sayHello Request', message)
-            response({ message: 'heyThere' })
+        node.handle('resources', (message, peer, response) => {
+            console.log('Resources Request', message)
+            // response(resources)
+            response({ message: JSON.stringify(resources) })
+            // response({ message: JSON.stringify(resourcesController.listResources) })
         })
         
         node.start().then(console.log, console.error) 
