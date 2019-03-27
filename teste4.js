@@ -4,15 +4,12 @@ const PeerInfo = require('peer-info')
 const protobuf = require('protobufjs')
 const ip = require('ip');
 const uuid = require('uuid')
-const Mplex = require('libp2p-mplex')
-const spdy = require('libp2p-spdy')
 const CID = require('cids')
-const PeerId = require('peer-id')
 
 const Node = require('libp2p-rpc')
 // const Node = require('../libp2p-rpc')
 const cell = {
-    id: 25,
+    id: 27,
     name: "EXEHDA-UFPel"
 }
 const resources = [{
@@ -49,7 +46,7 @@ const config = {
         enabled: true
     },
     modules: {
-        streamMuxer: [ Mplex, spdy ]
+
     },
     config: {
         EXPERIMENTAL: {
@@ -62,26 +59,22 @@ PeerInfo.create((err, peerInfo) => {
     if (err) throw new Error(err)
     
     protobuf.load(path.join(__dirname, './protocol_bkp.proto')).then((root) => {
+        const cid = new CID('QmTp9VkYvnHyrqKQuFPiuZkiX9gPcqj6x5LJ1rmWuSySnL')
         const node = new Node(peerInfo, root, config)
         var addr = '/ip4/'+ip.address()+'/tcp/46459/ipfs/'+peerInfo.id._idB58String
         
         console.log("id: ", peerInfo.id._idB58String)
         console.log("ipfs addr: ", addr)
 
+        node.contentRouting.provide(cid, (err) => {
+            if (err) { throw err }
+            console.log('Node %s is providing %s', node.peerInfo.id.toB58String(), cid.toBaseEncodedString())
+        })
+
         node.on('peer:discovery', (peer) => {
             if (node.peerBook.has(peer)) return
             console.log('Discovered:', peer.id.toB58String())
         })
-
-        setTimeout(function () {
-            peerid = PeerId.createFromB58String("Qmb9WDZUnUzEmZwkbMMGi4cV65F1sqcQa49dfZy9baRBJo")
-            node.peerRouting.findPeer(peerid, (err, peer) => {
-                if (err) { throw err }
-            
-                console.log('Found it, multiaddrs are:')
-                peer.multiaddrs.forEach((ma) => console.log(ma.toString()))
-            })
-        }, 3000)
 
         node.on('peer:connection', (conn, peer, type) => {
             console.log('peer:connection')

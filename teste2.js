@@ -5,9 +5,8 @@ const protobuf = require('protobufjs')
 const ip = require('ip');
 const uuid = require('uuid')
 const Mplex = require('libp2p-mplex')
-const spdy = require('libp2p-spdy')
 const CID = require('cids')
-const PeerId = require('peer-id')
+const spdy = require('libp2p-spdy')
 
 const Node = require('libp2p-rpc')
 // const Node = require('../libp2p-rpc')
@@ -43,7 +42,9 @@ const resources = [{
 const config = {
     name: 'your-protocol-name',
     version: '1.0.0',
-    bootstrapers: [],
+    bootstrapers: [
+        '/ip4/10.0.1.10/tcp/46459/ipfs/Qmb9WDZUnUzEmZwkbMMGi4cV65F1sqcQa49dfZy9baRBJo'
+    ],
     multicastDNS: {
         interval: 1000,
         enabled: true
@@ -70,18 +71,10 @@ PeerInfo.create((err, peerInfo) => {
 
         node.on('peer:discovery', (peer) => {
             if (node.peerBook.has(peer)) return
+
+            node.peerBook.put(peer)
             console.log('Discovered:', peer.id.toB58String())
         })
-
-        setTimeout(function () {
-            peerid = PeerId.createFromB58String("Qmb9WDZUnUzEmZwkbMMGi4cV65F1sqcQa49dfZy9baRBJo")
-            node.peerRouting.findPeer(peerid, (err, peer) => {
-                if (err) { throw err }
-            
-                console.log('Found it, multiaddrs are:')
-                peer.multiaddrs.forEach((ma) => console.log(ma.toString()))
-            })
-        }, 3000)
 
         node.on('peer:connection', (conn, peer, type) => {
             console.log('peer:connection')
@@ -98,7 +91,7 @@ PeerInfo.create((err, peerInfo) => {
             response({ message: JSON.stringify(resources[message.id]) })
             // response({ message: JSON.stringify(resourcesController.listResources) })
         })
-        
+
         node.start().then(console.log, console.error) 
     }, console.error)
 })
