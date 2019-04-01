@@ -73,18 +73,21 @@ PeerInfo.create((err, peerInfo) => {
             console.log('Discovered:', peer.id.toB58String())
         })
 
-        setTimeout(function () {
-            peerid = PeerId.createFromB58String("Qmb9WDZUnUzEmZwkbMMGi4cV65F1sqcQa49dfZy9baRBJo")
-            node.peerRouting.findPeer(peerid, (err, peer) => {
-                if (err) { throw err }
+        // setTimeout(function () {
+        //     var peerid = PeerId.createFromB58String("QmU13jxZXrTmpgodotGGNMdCre2BKfmqPyHdHWGh7vmJ5e")
+        //     node.peerRouting.findPeer(peerid, (err, peer) => {
+        //         if (err) { throw err }
             
-                console.log('Found it, multiaddrs are:')
-                peer.multiaddrs.forEach((ma) => console.log(ma.toString()))
-            })
-        }, 3000)
+        //         console.log('Found it, multiaddrs are:')
+        //         peer.multiaddrs.forEach((ma) => console.log(ma.toString()))
+        //     })
+        // }, 5000)
 
         node.on('peer:connection', (conn, peer, type) => {
             console.log('peer:connection')
+            peer.rpc.resources({ id: '1' }, (response, peer) => {
+                console.log('sayHello Response', response)
+            })
             console.log(peer._connectedMultiaddr)
         })
 
@@ -92,12 +95,12 @@ PeerInfo.create((err, peerInfo) => {
             console.log('peer:disconnect')
         })
         
-        node.handle('resources', (message, peer, response) => {
-            console.log('Resources Request', message)
-            // response(resources)
-            response({ message: JSON.stringify(resources[message.id]) })
-            // response({ message: JSON.stringify(resourcesController.listResources) })
-        })
+        // node.handle('resources', (message, peer, response) => {
+        //     console.log('Resources Request', message)
+        //     // response(resources)
+        //     response({ message: JSON.stringify(resources[message.id]) })
+        //     // response({ message: JSON.stringify(resourcesController.listResources) })
+        // })
         
         node.start().then(console.log, console.error) 
     }, console.error)

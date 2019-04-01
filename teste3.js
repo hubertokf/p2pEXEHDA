@@ -5,8 +5,8 @@ const protobuf = require('protobufjs')
 const ip = require('ip');
 const uuid = require('uuid')
 
-const Node = require('libp2p-rpc')
-// const Node = require('../libp2p-rpc')
+// const Node = require('libp2p-rpc')
+const Node = require('./node.js')
 const cell = {
     id: 27,
     name: "EXEHDA-UFPel"
@@ -61,13 +61,18 @@ PeerInfo.create((err, peerInfo) => {
         const node = new Node(peerInfo, root, config)
         var addr = '/ip4/'+ip.address()+'/tcp/46459/ipfs/'+peerInfo.id._idB58String
         
-        console.log("id: ", peerInfo.id._idB58String)
+        // console.log("id: ", peerInfo)
         console.log("ipfs addr: ", addr)
 
         node.on('peer:discovery', (peer) => {
             if (node.peerBook.has(peer)) return
+            // console.log(node.peerInfo.multiaddrs._multiaddrs)
             console.log('Discovered:', peer.id.toB58String())
         })
+
+        // setTimeout(function () {
+        //     console.log(node.peerInfo.multiaddrs._multiaddrs[1])
+        // }, 5000)
 
         node.on('peer:connection', (conn, peer, type) => {
             console.log('peer:connection')
@@ -83,6 +88,11 @@ PeerInfo.create((err, peerInfo) => {
             // response(resources)
             response({ message: JSON.stringify(resources[message.id]) })
             // response({ message: JSON.stringify(resourcesController.listResources) })
+        })
+
+        node.handle('sayHello', (message, peer, response) => {
+            console.log('sayHello Request', message)
+            response({ message: 'heyThere' })
         })
         
         node.start().then(console.log, console.error) 

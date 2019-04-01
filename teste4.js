@@ -63,16 +63,12 @@ PeerInfo.create((err, peerInfo) => {
         const node = new Node(peerInfo, root, config)
         var addr = '/ip4/'+ip.address()+'/tcp/46459/ipfs/'+peerInfo.id._idB58String
         
-        console.log("id: ", peerInfo.id._idB58String)
-        console.log("ipfs addr: ", addr)
-
-        node.contentRouting.provide(cid, (err) => {
-            if (err) { throw err }
-            console.log('Node %s is providing %s', node.peerInfo.id.toB58String(), cid.toBaseEncodedString())
-        })
-
+        // console.log("id: ", peerInfo.id._idB58String)
+        // console.log("ipfs addr: ", addr)
+        
         node.on('peer:discovery', (peer) => {
             if (node.peerBook.has(peer)) return
+            console.log(peer.multiaddrs._multiaddrs)
             console.log('Discovered:', peer.id.toB58String())
         })
 

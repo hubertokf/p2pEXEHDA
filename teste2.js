@@ -8,8 +8,9 @@ const Mplex = require('libp2p-mplex')
 const CID = require('cids')
 const spdy = require('libp2p-spdy')
 
-const Node = require('libp2p-rpc')
-// const Node = require('../libp2p-rpc')
+// const Node = require('libp2p-rpc')
+const Node = require('./node.js')
+
 const cell = {
     id: 25,
     name: "EXEHDA-UFPel"
@@ -43,7 +44,7 @@ const config = {
     name: 'your-protocol-name',
     version: '1.0.0',
     bootstrapers: [
-        '/ip4/10.0.1.10/tcp/46459/ipfs/Qmb9WDZUnUzEmZwkbMMGi4cV65F1sqcQa49dfZy9baRBJo'
+        '/ip4/10.0.1.10/tcp/33903/ipfs/QmVdTP7ve4AhrYMzQALEtbXojAYsZAMXTTwyJq8w46CosQ'
     ],
     multicastDNS: {
         interval: 1000,
@@ -72,13 +73,33 @@ PeerInfo.create((err, peerInfo) => {
         node.on('peer:discovery', (peer) => {
             if (node.peerBook.has(peer)) return
 
-            node.peerBook.put(peer)
+        //     // node.peerBook.put(peer)
             console.log('Discovered:', peer.id.toB58String())
+            // console.log(peer)
+        // //     // console.log(peer)
+        // //     // setTimeout(function () {
+        //         // node.dial(peer, (e) => {
+        // //             // peer.rpc.resources({ id: '1' }, (response, peer) => {
+        // //             //     console.log('sayHello Response', response)
+        // //             // })
+        // //         // })
+        //     }, 5000)
         })
 
         node.on('peer:connection', (conn, peer, type) => {
             console.log('peer:connection')
-            console.log(peer._connectedMultiaddr)
+            console.log(peer)
+            // console.log(peer._connectedMultiaddr)
+            // peer.rpc.resources({ id: '1' }, (response, peer) => {
+            //     console.log('sayHello Response', response)
+            // })
+        })
+
+        node.on('peer:connect', (peer) => {
+            console.log('Connection established to:', peer.id.toB58String())
+            // peer.rpc.resources({ id: '1' }, (response, peer) => {
+            //     console.log('sayHello Response', response)
+            // })
         })
 
         node.on('peer:disconnect', (peer) => {
