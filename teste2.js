@@ -44,20 +44,14 @@ const config = {
     name: 'your-protocol-name',
     version: '1.0.0',
     bootstrapers: [
-        '/ip4/10.0.1.10/tcp/33903/ipfs/QmVdTP7ve4AhrYMzQALEtbXojAYsZAMXTTwyJq8w46CosQ'
+        '/ip4/10.0.1.10/tcp/46719/ipfs/QmYAuYxw6QX1x5aafs6g3bUrPbMDifP5pDun3N9zbVLpEa'
     ],
     multicastDNS: {
         interval: 1000,
         enabled: true
     },
-    modules: {
-        streamMuxer: [ Mplex, spdy ]
-    },
-    config: {
-        EXPERIMENTAL: {
-            dht: true
-        }
-    }
+    modules: {},
+    config: {}
 }
 
 PeerInfo.create((err, peerInfo) => {
@@ -65,34 +59,22 @@ PeerInfo.create((err, peerInfo) => {
     
     protobuf.load(path.join(__dirname, './protocol_bkp.proto')).then((root) => {
         const node = new Node(peerInfo, root, config)
-        var addr = '/ip4/'+ip.address()+'/tcp/46459/ipfs/'+peerInfo.id._idB58String
-        
         console.log("id: ", peerInfo.id._idB58String)
-        console.log("ipfs addr: ", addr)
-
+        
         node.on('peer:discovery', (peer) => {
             if (node.peerBook.has(peer)) return
 
-        //     // node.peerBook.put(peer)
+            // node.peerBook.put(peer)
             console.log('Discovered:', peer.id.toB58String())
-            // console.log(peer)
-        // //     // console.log(peer)
-        // //     // setTimeout(function () {
-        //         // node.dial(peer, (e) => {
-        // //             // peer.rpc.resources({ id: '1' }, (response, peer) => {
-        // //             //     console.log('sayHello Response', response)
-        // //             // })
-        // //         // })
-        //     }, 5000)
         })
 
         node.on('peer:connection', (conn, peer, type) => {
             console.log('peer:connection')
-            console.log(peer)
+            // console.log(peer)
             // console.log(peer._connectedMultiaddr)
-            // peer.rpc.resources({ id: '1' }, (response, peer) => {
-            //     console.log('sayHello Response', response)
-            // })
+            peer.rpc.resources({ id: '1' }, (response, peer) => {
+                console.log('sayHello Response', response)
+            })
         })
 
         node.on('peer:connect', (peer) => {
@@ -113,6 +95,7 @@ PeerInfo.create((err, peerInfo) => {
             // response({ message: JSON.stringify(resourcesController.listResources) })
         })
 
-        node.start().then(console.log, console.error) 
+        // node.start().then(console.log, console.error) 
+        node.start().then() 
     }, console.error)
 })

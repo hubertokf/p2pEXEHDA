@@ -40,7 +40,8 @@ class Node extends libp2p {
                     WS
                 ],
                 streamMuxer: [
-                    spdy,
+                    Mplex,
+                    spdy
                 ],
                 connEncryption: [
                     secio
@@ -64,6 +65,9 @@ class Node extends libp2p {
                 dht: {
                     kBucketSize: 20,
                     enabledDiscovery: true
+                },
+                EXPERIMENTAL: {
+                    dht: true
                 }
             }, options.config)
         }
@@ -117,7 +121,6 @@ class Node extends libp2p {
 
                 this.on('peer:discovery', (peer) => {
                     if (this.peerBook.has(peer)) return
-                    // this.peerBook.put(peer)
 
                     debug('peer discovered:', peer.id.toB58String())
 
@@ -129,7 +132,6 @@ class Node extends libp2p {
     
                 this.on('peer:connect', (peer) => {
                     debug('peer connection:', peer.id.toB58String())
-                    // return this._connection(conn, peer, 'outgoing')
                 })
                 super.handle(`/${this._options.name}/${this._options.version}`, (protocol, conn) => {
                     return this._connection(conn, null, 'incoming')
