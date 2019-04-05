@@ -55,7 +55,10 @@ class Node extends libp2p {
 
             config: Object.assign({
                 peerDiscovery: {
-                    mdns: options.multicastDNS || {enabled: false},
+                    mdns: {
+                        interval: 1000,
+                        enabled: true
+                    },
                     bootstrap: {
                         interval: 2000,
                         enabled: true,

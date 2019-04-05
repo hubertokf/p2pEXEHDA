@@ -1,75 +1,103 @@
 /* eslint-disable no-console */
 'use strict'
 
+const fs = require('fs')
+const path = require('path')
 const libp2p = require('libp2p')
 const TCP = require('libp2p-tcp')
 const Mplex = require('libp2p-mplex')
 const SECIO = require('libp2p-secio')
 const PeerInfo = require('peer-info')
-const Bootstrap = require('libp2p-bootstrap')
-const waterfall = require('async/waterfall')
+const KadDHT = require('libp2p-kad-dht')
 const defaultsDeep = require('@nodeutils/defaults-deep')
+const waterfall = require('async/waterfall')
+const parallel = require('async/parallel')
+const MulticastDNS = require('libp2p-mdns')
+const Bootstrap = require('libp2p-bootstrap')
+const Node = require('./node.js')
+const protobuf = require('protobufjs')
 
-// Find this list at: https://github.com/ipfs/js-ipfs/blob/master/src/core/runtime/config-nodejs.json
-const bootstrapers = [
-//   '/ip4/104.131.131.82/tcp/4001/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ',
-  '/ip4/10.0.1.11/tcp/44881/ipfs/QmQ5cTvqUKoVnGE6poCRqgyKi4MQ9adqtstLNS9dK8pUVb'
-//   '/ip4/104.236.176.52/tcp/4001/p2p/QmSoLnSGccFuZQJzRadHn95W2CrSFmZuTdDWP8HXaHca9z',
-//   '/ip4/104.236.179.241/tcp/4001/p2p/QmSoLPppuBtQSGwKDZT2M73ULpjvfd3aZ6ha4oFGL1KrGM',
-//   '/ip4/162.243.248.213/tcp/4001/p2p/QmSoLueR4xBeUbY9WZ9xGUUxunbKWcrNFTDAadQJmocnWm',
-//   '/ip4/128.199.219.111/tcp/4001/p2p/QmSoLSafTMBsPKadTEgaXctDQVcqN88CNLHXMkTNwMKPnu',
-//   '/ip4/104.236.76.40/tcp/4001/p2p/QmSoLV4Bbm51jM9C4gDYZQ9Cy3U6aXMJDAbzgu2fzaDs64',
-//   '/ip4/178.62.158.247/tcp/4001/p2p/QmSoLer265NRgSp2LA3dPaeykiS1J6DifTC88f5uVQKNAd',
-//   '/ip4/178.62.61.185/tcp/4001/p2p/QmSoLMeWqB7YGVLJN3pNLQpmmEk35v6wYtsMGLzSr5QBU3',
-//   '/ip4/104.236.151.122/tcp/4001/p2p/QmSoLju6m7xTh3DuokvT3886QRYqxAzb1kShaanJgW36yx'
-]
+function createNode1 (callback) {
+  let node
 
-class MyBundle extends libp2p {
-  constructor (_options) {
-    const defaults = {
-      modules: {
-        transport: [ TCP ],
-        streamMuxer: [ Mplex ],
-        connEncryption: [ SECIO ],
-        peerDiscovery: [ Bootstrap ]
-      },
-      config: {
-        peerDiscovery: {
-          bootstrap: {
-            interval: 2000,
-            enabled: true,
-            list: bootstrapers
-          }
-        }
+  waterfall([
+    (cb) => PeerInfo.create(cb),
+    (peerInfo, cb) => {
+      const config = {
+        name: 'p2pe',
+        version: '1.0.0',
+        bootstrapers: [],
+        modules: {},
+        config: {}
       }
-    }
+      peerInfo.multiaddrs.add('/ip4/0.0.0.0/tcp/0')
+      protobuf.load(path.join(__dirname, './protocol_bkp.proto')).then((root) => {
+        const node = new Node(peerInfo, root, config)
+        console.log(node)
 
-    super(defaultsDeep(_options, defaults))
-  }
+        node.start()
+      })
+    }
+  ], (err) => callback(err, node))
 }
 
-let node
+function createNode2 (callback) {
+  let node
 
-waterfall([
-  (cb) => PeerInfo.create(cb),
-  (peerInfo, cb) => {
-    peerInfo.multiaddrs.add('/ip4/0.0.0.0/tcp/0')
-    node = new MyBundle({
-      peerInfo
-    })
-    node.start(cb)
-  }
-], (err) => {
+  waterfall([
+    (cb) => PeerInfo.create(cb),
+    (peerInfo, cb) => {
+      const config = {
+        name: 'p2pe',
+        version: '1.0.0',
+        bootstrapers: ['/ip4/10.0.1.10/tcp/46543/ipfs/QmeKx6D3KmPMZnhnyLLWLSBwyZ3y3HQvJbJRJioG4o8Ug9'],
+        modules: {},
+        config: {}
+      }
+      peerInfo.multiaddrs.add('/ip4/0.0.0.0/tcp/0')
+      protobuf.load(path.join(__dirname, './protocol_bkp.proto')).then((root) => {
+        const node = new Node(peerInfo, root, config)
+        console.log(node)
+
+        node.start()
+      })
+    }
+  ], (err) => callback(err, node))
+}
+
+parallel([
+  (cb) => createNode1(cb),
+  (cb) => createNode2(cb),
+], (err, nodes) => {
   if (err) { throw err }
+  console.log(nodes)
 
-  node.on('peer:discovery', (peer) => {
-    console.log('Discovered:', peer.id.toB58String())
-    node.dial(peer, (e) => {
-        console.log("oi", e)
+  const node1 = nodes[0]
+  const node2 = nodes[1]
+  console.log('node1: ',node1.peerInfo.id.toB58String())
+
+
+  node2.on('peer:discovery', (peer3) => {
+    if (node2.peerBook.has(peer3)) return
+
+    // node.peerBook.put(peer)
+    console.log('Discovered:', peer3.id.toB58String())
+    
+    parallel([
+      (cb) => node1.dial(node2.peerInfo, cb),
+      (cb) => node2.dial(peer3, cb),
+      // Set up of the cons might take time
+      (cb) => setTimeout(cb, 300)
+    ], (err) => {
+      if (err) { throw err }
+  
+      node1.peerRouting.findPeer(peer3.id, (err, peer) => {
+        if (err) { throw err }
+  
+        console.log('Found it, multiaddrs are:')
+        peer.multiaddrs.forEach((ma) => console.log(ma.toString()))
+      })
     })
   })
 
-  node.on('peer:connect', (peer) => {
-    console.log('Connection established to:', peer.id.toB58String())
-  })
 })

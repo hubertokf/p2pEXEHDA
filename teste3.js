@@ -40,17 +40,10 @@ const config = {
     name: 'your-protocol-name',
     version: '1.0.0',
     bootstrapers: [],
-    multicastDNS: {
-        interval: 1000,
-        enabled: true
-    },
     modules: {
 
     },
     config: {
-        EXPERIMENTAL: {
-            dht: true
-        }
     }
 }
 
@@ -61,19 +54,19 @@ PeerInfo.create((err, peerInfo) => {
         const node = new Node(peerInfo, root, config)
         console.log("id: ", peerInfo.id._idB58String)
         
-        node.on('peer:discovery', (peer) => {
-            if (node.peerBook.has(peer)) return
-            console.log('Discovered:', peer.id.toB58String())
-        })
+        // node.on('peer:discovery', (peer) => {
+        //     if (node.peerBook.has(peer)) return
+        //     console.log('Discovered:', peer.id.toB58String())
+        // })
 
-        node.on('peer:connection', (conn, peer, type) => {
-            console.log('peer:connection')
-            console.log(peer._connectedMultiaddr)
-        })
+        // node.on('peer:connection', (conn, peer, type) => {
+        //     console.log('peer:connection')
+        //     console.log(peer._connectedMultiaddr)
+        // })
 
-        node.on('peer:disconnect', (peer) => {
-            console.log('peer:disconnect')
-        })
+        // node.on('peer:disconnect', (peer) => {
+        //     console.log('peer:disconnect')
+        // })
         
         node.handle('resources', (message, peer, response) => {
             console.log('Resources Request', message)

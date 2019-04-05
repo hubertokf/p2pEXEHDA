@@ -44,7 +44,7 @@ const config = {
     name: 'your-protocol-name',
     version: '1.0.0',
     bootstrapers: [
-        '/ip4/10.0.1.10/tcp/46719/ipfs/QmYAuYxw6QX1x5aafs6g3bUrPbMDifP5pDun3N9zbVLpEa'
+        '/ip4/10.0.1.10/tcp/40583/ipfs/QmWnCbWY7LG4HWFAKKZg5Dddv8BKH6yeLWcSF5o2D1ZZAr'
     ],
     multicastDNS: {
         interval: 1000,
@@ -60,33 +60,36 @@ PeerInfo.create((err, peerInfo) => {
     protobuf.load(path.join(__dirname, './protocol_bkp.proto')).then((root) => {
         const node = new Node(peerInfo, root, config)
         console.log("id: ", peerInfo.id._idB58String)
+
         
-        node.on('peer:discovery', (peer) => {
-            if (node.peerBook.has(peer)) return
+        
+        // node.on('peer:discovery', (peer) => {
+        //     if (node.peerBook.has(peer)) return
 
-            // node.peerBook.put(peer)
-            console.log('Discovered:', peer.id.toB58String())
-        })
+        //     node.peerBook.put(peer)
+        //     console.log('Discovered:', peer.id.toB58String())
+        //     console.log(node.peerBook)
+        // })
 
-        node.on('peer:connection', (conn, peer, type) => {
-            console.log('peer:connection')
-            // console.log(peer)
-            // console.log(peer._connectedMultiaddr)
-            peer.rpc.resources({ id: '1' }, (response, peer) => {
-                console.log('sayHello Response', response)
-            })
-        })
+        // node.on('peer:connection', (conn, peer, type) => {
+        //     console.log('peer:connection')
+        //     // console.log(peer)
+        //     // console.log(peer._connectedMultiaddr)
+        //     // peer.rpc.resources({ id: '1' }, (response, peer) => {
+        //     //     console.log('sayHello Response', response)
+        //     // })
+        // })
 
-        node.on('peer:connect', (peer) => {
-            console.log('Connection established to:', peer.id.toB58String())
-            // peer.rpc.resources({ id: '1' }, (response, peer) => {
-            //     console.log('sayHello Response', response)
-            // })
-        })
+        // node.on('peer:connect', (peer) => {
+        //     console.log('Connection established to:', peer.id.toB58String())
+        //     // peer.rpc.resources({ id: '1' }, (response, peer) => {
+        //     //     console.log('sayHello Response', response)
+        //     // })
+        // })
 
-        node.on('peer:disconnect', (peer) => {
-            console.log('peer:disconnect')
-        })
+        // node.on('peer:disconnect', (peer) => {
+        //     console.log('peer:disconnect')
+        // })
         
         node.handle('resources', (message, peer, response) => {
             console.log('Resources Request', message)

@@ -1,29 +1,21 @@
 /* eslint-disable no-console */
 'use strict'
 
+const fs = require('fs')
+const path = require('path')
 const libp2p = require('libp2p')
 const TCP = require('libp2p-tcp')
 const Mplex = require('libp2p-mplex')
 const SECIO = require('libp2p-secio')
 const PeerInfo = require('peer-info')
-const Bootstrap = require('libp2p-bootstrap')
-const waterfall = require('async/waterfall')
+const KadDHT = require('libp2p-kad-dht')
 const defaultsDeep = require('@nodeutils/defaults-deep')
-// const Node = require('./node.js')
-
-// Find this list at: https://github.com/ipfs/js-ipfs/blob/master/src/core/runtime/config-nodejs.json
-const bootstrapers = [
-  // '/ip4/104.131.131.82/tcp/4001/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ',
-  // '/ip4/10.0.1.10/tcp/36987/ipfs/QmSMiCnqKLQYjNtiDuFf91fugz2iJA6jFVQyxbdqhnn76s'
-//   '/ip4/104.236.176.52/tcp/4001/p2p/QmSoLnSGccFuZQJzRadHn95W2CrSFmZuTdDWP8HXaHca9z',
-//   '/ip4/104.236.179.241/tcp/4001/p2p/QmSoLPppuBtQSGwKDZT2M73ULpjvfd3aZ6ha4oFGL1KrGM',
-//   '/ip4/162.243.248.213/tcp/4001/p2p/QmSoLueR4xBeUbY9WZ9xGUUxunbKWcrNFTDAadQJmocnWm',
-//   '/ip4/128.199.219.111/tcp/4001/p2p/QmSoLSafTMBsPKadTEgaXctDQVcqN88CNLHXMkTNwMKPnu',
-//   '/ip4/104.236.76.40/tcp/4001/p2p/QmSoLV4Bbm51jM9C4gDYZQ9Cy3U6aXMJDAbzgu2fzaDs64',
-//   '/ip4/178.62.158.247/tcp/4001/p2p/QmSoLer265NRgSp2LA3dPaeykiS1J6DifTC88f5uVQKNAd',
-//   '/ip4/178.62.61.185/tcp/4001/p2p/QmSoLMeWqB7YGVLJN3pNLQpmmEk35v6wYtsMGLzSr5QBU3',
-//   '/ip4/104.236.151.122/tcp/4001/p2p/QmSoLju6m7xTh3DuokvT3886QRYqxAzb1kShaanJgW36yx'
-]
+const waterfall = require('async/waterfall')
+const parallel = require('async/parallel')
+const MulticastDNS = require('libp2p-mdns')
+const Bootstrap = require('libp2p-bootstrap')
+const Node = require('./node.js')
+const protobuf = require('protobufjs')
 
 class MyBundle extends libp2p {
   constructor (_options) {
@@ -32,59 +24,63 @@ class MyBundle extends libp2p {
         transport: [ TCP ],
         streamMuxer: [ Mplex ],
         connEncryption: [ SECIO ],
-        peerDiscovery: [ Bootstrap ]
+        peerDiscovery: [
+            MulticastDNS
+        ],
+        // we add the DHT module that will enable Peer and Content Routing
+        dht: KadDHT
       },
       config: {
+        dht: {
+          kBucketSize: 20
+        },
         peerDiscovery: {
-          bootstrap: {
-            interval: 2000,
-            enabled: true,
-            list: bootstrapers
+          mdns: {
+            interval: 10000,
+            enabled: true   
           }
+        },
+        EXPERIMENTAL: {
+          dht: true
         }
       }
     }
 
     super(defaultsDeep(_options, defaults))
-
-
-  }
-
-  start (cb){
-    super.start(cb)
   }
 }
 
-let node
+function createNode (callback) {
+  let node
 
-var cb = function(){
-  console.log(this)
+  waterfall([
+    (cb) => PeerInfo.create(cb),
+    (peerInfo, cb) => {
+      peerInfo.multiaddrs.add('/ip4/0.0.0.0/tcp/0')
+      node = new MyBundle({
+        peerInfo
+      })
+      node.start(cb)
+    }
+  ], (err) => callback(err, node))
 }
 
-waterfall([
-  (cb) => PeerInfo.create(cb),
-  (peerInfo, cb) => {
-    peerInfo.multiaddrs.add('/ip4/0.0.0.0/tcp/0')
-    node = new MyBundle({
-      peerInfo
-    })
-    node.start(function () {
-      console.log(node)
-    })
-  }
-], (err) => {
+parallel([
+  (cb) => createNode(cb)
+], (err, nodes) => {
   if (err) { throw err }
 
-  node.peerInfo.multiaddrs.forEach((item) => console.log(item.toString()))
+  const node3 = nodes[0]
+  // console.log(node3._dht)
+  console.log('node3: ',node3.peerInfo.id.toB58String())
+  node3.peerInfo.multiaddrs.forEach((ma) => console.log(ma.toString()))
 
-  node.on('peer:discovery', (peer) => {
+  node3.on('peer:discovery', (peer) => {
+    if (node3.peerBook.has(peer)) return
+
+    // node.peerBook.put(peer)
     console.log('Discovered:', peer.id.toB58String())
-    node.dial(peer, (e) => {
-        console.log("oi", e)
-    })
+
   })
 
-  node.on('peer:connect', (peer) => {
-    console.log('Connection established to:', peer.id.toB58String())
-  })
 })
