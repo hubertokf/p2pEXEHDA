@@ -7,6 +7,7 @@ const uuid = require('uuid')
 const Mplex = require('libp2p-mplex')
 const CID = require('cids')
 const spdy = require('libp2p-spdy')
+const PeerBook = require('peer-book')
 
 // const Node = require('libp2p-rpc')
 const Node = require('./node.js')
@@ -44,7 +45,7 @@ const config = {
     name: 'your-protocol-name',
     version: '1.0.0',
     bootstrapers: [
-        '/ip4/10.0.1.10/tcp/40583/ipfs/QmWnCbWY7LG4HWFAKKZg5Dddv8BKH6yeLWcSF5o2D1ZZAr'
+        '/ip4/10.0.1.11/tcp/33975/ipfs/QmXmpH9ne6coVGcK5s4ejji9sBz46rJsTM2bMBhxPLmW2x'
     ],
     multicastDNS: {
         interval: 1000,
@@ -59,6 +60,7 @@ PeerInfo.create((err, peerInfo) => {
     
     protobuf.load(path.join(__dirname, './protocol_bkp.proto')).then((root) => {
         const node = new Node(peerInfo, root, config)
+        const peerBook = new PeerBook()
         console.log("id: ", peerInfo.id._idB58String)
 
         
@@ -66,19 +68,20 @@ PeerInfo.create((err, peerInfo) => {
         // node.on('peer:discovery', (peer) => {
         //     if (node.peerBook.has(peer)) return
 
-        //     node.peerBook.put(peer)
+        //     // node.peerBook.put(peer)
         //     console.log('Discovered:', peer.id.toB58String())
-        //     console.log(node.peerBook)
+        //     // console.log(node.peerBook)
         // })
 
-        // node.on('peer:connection', (conn, peer, type) => {
-        //     console.log('peer:connection')
-        //     // console.log(peer)
-        //     // console.log(peer._connectedMultiaddr)
-        //     // peer.rpc.resources({ id: '1' }, (response, peer) => {
-        //     //     console.log('sayHello Response', response)
-        //     // })
-        // })
+        node.on('peer:connection', (conn, peer, type) => {
+            console.log('peer:connection')
+            console.log(peer)
+            peerBook.add(peer)
+            // console.log(peer._connectedMultiaddr)
+            // peer.rpc.resources({ id: '1' }, (response, peer) => {
+            //     console.log('sayHello Response', response)
+            // })
+        })
 
         // node.on('peer:connect', (peer) => {
         //     console.log('Connection established to:', peer.id.toB58String())

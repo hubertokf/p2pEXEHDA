@@ -1,13 +1,13 @@
 const fs = require('fs')
 const path = require('path')
 const PeerInfo = require('peer-info')
+const PeerId = require('peer-id')
 const protobuf = require('protobufjs')
 const ip = require('ip');
 const uuid = require('uuid')
 const Mplex = require('libp2p-mplex')
 const CID = require('cids')
 const spdy = require('libp2p-spdy')
-const PeerId = require('peer-id')
 
 // const Node = require('libp2p-rpc')
 const Node = require('./node.js')
@@ -45,15 +45,14 @@ const config = {
     name: 'your-protocol-name',
     version: '1.0.0',
     bootstrapers: [
+        // '/ip4/10.0.1.11/tcp/33975/ipfs/QmXmpH9ne6coVGcK5s4ejji9sBz46rJsTM2bMBhxPLmW2x'
     ],
     multicastDNS: {
         interval: 1000,
         enabled: true
     },
-    modules: {
-    },
-    config: {
-    }
+    modules: {},
+    config: {}
 }
 
 PeerInfo.create((err, peerInfo) => {
@@ -63,80 +62,34 @@ PeerInfo.create((err, peerInfo) => {
         const node = new Node(peerInfo, root, config)
         console.log("id: ", peerInfo.id._idB58String)
 
-        id_n4 = PeerId.createFromB58String("QmZCszEZfzu2sT1wdHb7y9tYXE9AUa8LyiWufLRkVd2m1R")
-        id_n7 = PeerId.createFromB58String("QmWnCbWY7LG4HWFAKKZg5Dddv8BKH6yeLWcSF5o2D1ZZAr")
-
         
         
         // node.on('peer:discovery', (peer) => {
         //     if (node.peerBook.has(peer)) return
-        //     // console.log(peer)
+
         //     // node.peerBook.put(peer)
         //     console.log('Discovered:', peer.id.toB58String())
-        //     console.log(node.peerBook)
-        //     // id_n7 = PeerId.createFromB58String("QmSSRuBmRMaGyLSsFKg3fV7Ljq31Jh5HmTCidNN18huPS8")
-
-        //     // node.peerRouting.findPeer(id_n7, (err, peer) => {
-        //     //     if (err) { 
-        //     //         // console.log(err)
-        //     //         console.log('\x1b[31m', 'Peer lookup failed ')
-        //     //     }else{
-        //     //         console.log('Found it, multiaddrs are:')
-        //     //         peer.multiaddrs.forEach((ma) => console.log(ma.toString()))
-        //     //     }
-        //     // })
+        //     // console.log(node.peerBook)
         // })
 
-        // node.on('peer:connection', (conn, peer, type) => {
-        //     console.log('peer:connection id: ', peer.id.toB58String())
-        //     // console.log(peer)
-        //     // console.log(peer._connectedMultiaddr)
-        //     // peer.rpc.resources({ id: '1' }, (response, peer) => {
-        //     //     console.log('sayHello Response', response)
-        //     // })
-        //     id_n7 = PeerId.createFromB58String("QmSSRuBmRMaGyLSsFKg3fV7Ljq31Jh5HmTCidNN18huPS8")
-        //     id_n5 = PeerId.createFromB58String("QmU7XihoWwFgT8tko1VfxNuDPjmczBYnbnWHQ7TTK4wDVZ")
-        //     options = {
-        //         maxTimeout: 50000
-        //     }
-
-        //     node.peerRouting.findPeer(id_n7, (err, peer) => {
-        //         if (err) { 
-        //             // console.log(err)
-        //             console.log('\x1b[31m', 'Peer lookup failed ')
-        //         }else{
-        //             console.log('Found it, multiaddrs are:')
-        //             peer.multiaddrs.forEach((ma) => console.log(ma.toString()))
-        //         }
-        //     })
-        // })
+        node.on('peer:connection', (conn, peer, type) => {
+            console.log('peer:connection')
+            // console.log(peer)
+            // console.log(peer._connectedMultiaddr)
+            peer.rpc.resources({ id: '1' }, (response, peer) => {
+                console.log('sayHello Response', response)
+            })
+        })
 
         // node.on('peer:connect', (peer) => {
         //     console.log('Connection established to:', peer.id.toB58String())
-        //     id_n7 = PeerId.createFromB58String("QmSSRuBmRMaGyLSsFKg3fV7Ljq31Jh5HmTCidNN18huPS8")
-        //     id_n5 = PeerId.createFromB58String("QmU7XihoWwFgT8tko1VfxNuDPjmczBYnbnWHQ7TTK4wDVZ")
-        //     options = {
-        //         maxTimeout: 50000
-        //     }
-
-        //     // console.log(peer.id)
-
-        //     node.peerRouting.findPeer(id_n7, (err, peer) => {
-        //         if (err) { 
-        //             // console.log(err
-        //             console.log('\x1b[31m', 'Peer lookup failed ')
-        //         }else{
-        //             console.log('Found it, multiaddrs are:')
-        //             peer.multiaddrs.forEach((ma) => console.log(ma.toString()))
-        //         }
-        //     })
         //     // peer.rpc.resources({ id: '1' }, (response, peer) => {
         //     //     console.log('sayHello Response', response)
         //     // })
         // })
 
         // node.on('peer:disconnect', (peer) => {
-        //     console.log('peer:disconnect id:', peer.id.toB58String())
+        //     console.log('peer:disconnect')
         // })
         
         node.handle('resources', (message, peer, response) => {
@@ -148,6 +101,8 @@ PeerInfo.create((err, peerInfo) => {
 
         // node.start().then(console.log, console.error) 
         node.start().then(()=>{
+            id_n7 = PeerId.createFromB58String("QmXmpH9ne6coVGcK5s4ejji9sBz46rJsTM2bMBhxPLmW2x")
+
             setTimeout( ()=>{
                 node.peerRouting.findPeer(id_n7, (err, peer) => {
                     if (err) { 
@@ -155,7 +110,13 @@ PeerInfo.create((err, peerInfo) => {
                         console.log('\x1b[31m', 'Peer lookup failed ')
                     }else{
                         console.log('Found it, multiaddrs are:')
-                        peer.multiaddrs.forEach((ma) => console.log(ma.toString()))
+                        peer.multiaddrs.forEach((ma) => {
+                            console.log(ma.toString())
+                        })
+                        node.dial(peer, ()=>{
+                            console.log("conectou", peer.rpc)
+                        })
+
                     }
                 })
             }, 5000)

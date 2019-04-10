@@ -123,20 +123,28 @@ class Node extends libp2p {
                 debug('methods:', Object.keys(this._protocol.methods))
 
                 this.on('peer:discovery', (peer) => {
+                    // console.log("entrou------------------------------------------------------")
                     if (this.peerBook.has(peer)) return
-
+                    
+                    debug('-----------------------------------------')
                     debug('peer discovered:', peer.id.toB58String())
-
+                    
                     this.dialProtocol(peer, `/${this._options.name}/${this._options.version}`, (err, conn) => {
                         if( err ) debug('error during dialProtocol', err)
-                        else return this._connection(conn, peer, 'outgoing')
+                        else this._connection(conn, peer, 'outgoing')
                     })
                 })
     
                 this.on('peer:connect', (peer) => {
                     debug('peer connection:', peer.id.toB58String())
+                    debug('-----------------------------------------')
+                    this.dialProtocol(peer, `/${this._options.name}/${this._options.version}`, (err, conn) => {
+                        if( err ) debug('error during dialProtocol', err)
+                        else this._connection(conn, peer, 'outgoing')
+                    })
                 })
                 super.handle(`/${this._options.name}/${this._options.version}`, (protocol, conn) => {
+                    debug('handling protocol',`/${this._options.name}/${this._options.version}`)
                     return this._connection(conn, null, 'incoming')
                 })
 
@@ -173,6 +181,8 @@ class Node extends libp2p {
                 pull.map((message) => this._query(message, peer, send)),
                 pull.drain()
             )
+
+            // debug('peer', peer)
         
             if (peer) {
                 peer.rpc = this._rpc(send)
